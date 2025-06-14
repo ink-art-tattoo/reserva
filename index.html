@@ -308,6 +308,12 @@
           <input type="tel" id="telefono" placeholder="Ingrese su número de teléfono" required>
         </div>
         
+        
+        <div class="form-group">
+          <label for="email"><i class="fas fa-envelope"></i> Correo electrónico</label>
+          <input type="email" id="email" placeholder="Ingrese su correo electrónico" required>
+        </div>
+
         <div class="form-group">
           <label for="fecha"><i class="fas fa-calendar-day"></i> Fecha</label>
           <input type="date" id="fecha" required>
@@ -354,12 +360,14 @@
       <p>Sistema de Reservas &copy; 2023 | Todos los derechos reservados</p>
     </footer>
   </div>
+
+  
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import emailjs from "https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js";
 
-  // Configura Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyCANqpv_Qoj_zSdVrg57GFzmBNvhdUcII8",
     authDomain: "reservasweb-3ab66.firebaseapp.com",
@@ -372,11 +380,10 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // Horarios base
   const horarios = [];
   for (let h = 8; h <= 17; h++) {
-    horarios.push(${String(h).padStart(2, '0')}:00);
-    horarios.push(${String(h).padStart(2, '0')}:30);
+    horarios.push(`${String(h).padStart(2, '0')}:00`);
+    horarios.push(`${String(h).padStart(2, '0')}:30`);
   }
 
   const fechaInput = document.getElementById('fecha');
@@ -461,8 +468,10 @@
 
     const nombre = document.getElementById("nombre").value;
     const telefono = document.getElementById("telefono").value;
+    const correo = document.getElementById("email").value;
     const fecha = document.getElementById("fecha").value;
     const hora = horaSelect.value;
+
     if (!hora) {
       mensajeDiv.className = "error";
       mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Por favor, selecciona un horario.';
@@ -477,6 +486,7 @@
       await addDoc(collection(db, "reservasweb"), { 
         nombre, 
         telefono, 
+        correo,
         fecha, 
         hora, 
         timestamp: new Date() 
@@ -487,16 +497,16 @@
         telefono: telefono,
         fecha: fecha,
         hora: hora,
-        para_email: "cliente@ejemplo.com"
+        para_email: correo
       });
 
       mensajeDiv.className = "success";
-      mensajeDiv.innerHTML = 
+      mensajeDiv.innerHTML = `
         <i class="fas fa-check-circle"></i>
         <h3>¡Reserva Confirmada!</h3>
         <p>Gracias ${nombre}, tu reserva para el ${fecha} a las ${hora} ha sido registrada.</p>
-        <p>Recibirás un correo de confirmación.</p>
-      ;
+        <p>Recibirás un correo de confirmación en ${correo}.</p>
+      `;
       mensajeDiv.style.display = 'block';
 
       document.getElementById("reserva-form").reset();
@@ -507,11 +517,11 @@
     } catch (error) {
       console.error("Error:", error);
       mensajeDiv.className = "error";
-      mensajeDiv.innerHTML = 
+      mensajeDiv.innerHTML = `
         <i class="fas fa-exclamation-triangle"></i>
         <h3>Error en la Reserva</h3>
         <p>Hubo un problema al registrar tu reserva. Por favor, inténtalo de nuevo.</p>
-      ;
+      `;
       mensajeDiv.style.display = 'block';
     } finally {
       submitBtn.disabled = false;
@@ -519,5 +529,6 @@
     }
   });
 </script>
+
 </body>
 </html>
