@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tattoo Studio - Sistema de Reservas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        :root {
+            --primary: #ff5e94;
+            --secondary: #6a11cb;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #28a745;
+            --gray: #6c757d;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            gap: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), #ff8a00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .user-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), #ff8a00);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 94, 148, 0.4);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+        
+        .calendar-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .calendar-nav button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .calendar-nav button:hover {
+            background: var(--primary);
+        }
+        
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            padding: 15px 0;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .calendar-day {
+            background: rgba(255, 255, 255, 0.08);
+            height: 80px;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .calendar-day.active {
+            background: linear-gradient(135deg, var(--primary), #ff8a00);
+            box-shadow: 0 5px 15px rgba(255, 94, 148, 0.4);
+        }
+        
+        .calendar-day-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .calendar-day-events {
+            margin-top: auto;
+            display: flex;
+            gap: 3px;
+        }
+        
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar h2 i {
+            color: var(--primary);
+        }
+        
+        .selected-date {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .selected-date h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .time-slot {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .time-slot:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        
+        .time-slot.selected {
+            background: linear-gradient(135deg, var(--primary), #ff8a00);
+            box-shadow: 0 5px 15px rgba(255, 94, 148, 0.4);
+        }
+        
+        .time-slot.booked {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--gray);
+            cursor: not-allowed;
+        }
+        
+        .booking-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .booking-summary h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 1.1rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+        
+        /* Formulario de contacto */
+        .contact-form {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .contact-form h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .calendar-day {
+                height: 70px;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+            
+            .user-controls {
+                justify-content: center;
+            }
+            
+            .calendar-day {
+                height: 60px;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .calendar {
+                gap: 5px;
+            }
+            
+            .calendar-day {
+                height: 50px;
+                padding: 5px;
+            }
+            
+            .calendar-day-number {
+                font-size: 1rem;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .contact-form, .booking-summary {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            .time-slots {
+                grid-template-columns: 1fr;
+            }
+            
+            .calendar-day-header {
+                padding: 10px 0;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-paint-brush"></i>
+                <h1>TATTOO STUDIO</h1>
+            </div>
+            <div class="user-controls">
+                <button class="btn btn-outline">
+                    <i class="fas fa-user"></i> Mi Cuenta
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-calendar-check"></i> Mis Reservas
+                </button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h2 id="current-month">Junio 2025</h2>
+                    <div class="calendar-nav">
+                        <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                        <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="calendar">
+                    <div class="calendar-day-header">Lun</div>
+                    <div class="calendar-day-header">Mar</div>
+                    <div class="calendar-day-header">Mié</div>
+                    <div class="calendar-day-header">Jue</div>
+                    <div class="calendar-day-header">Vie</div>
+                    <div class="calendar-day-header">Sáb</div>
+                    <div class="calendar-day-header">Dom</div>
+                    
+                    <!-- Días del calendario generados por JavaScript -->
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <h2><i class="fas fa-clock"></i> Horarios Disponibles</h2>
+                
+                <div class="selected-date">
+                    <h3 id="selected-date-display">15 de Junio de 2025</h3>
+                </div>
+                
+                <div class="time-slots">
+                    <!-- Horarios generados por JavaScript -->
+                </div>
+                
+                <div class="contact-form">
+                    <h3><i class="fas fa-user"></i> Información del Cliente</h3>
+                    <div class="form-group">
+                        <label for="client-name">Nombre Completo</label>
+                        <input type="text" id="client-name" placeholder="Tu nombre completo">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-phone">Número de Teléfono</label>
+                        <input type="tel" id="client-phone" placeholder="Tu número de teléfono">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-email">Correo Electrónico</label>
+                        <input type="email" id="client-email" placeholder="Tu correo electrónico">
+                    </div>
+                </div>
+                
+                <div class="booking-summary">
+                    <h3><i class="fas fa-receipt"></i> Resumen de Reserva</h3>
+                    <div class="summary-item">
+                        <span>Fecha:</span>
+                        <span id="summary-date">15/06/2025</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Hora:</span>
+                        <span id="summary-time">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Artista:</span>
+                        <span>María Rodríguez</span>
+                    </div>
+                    <div class="summary-item" style="margin-top: 15px; font-weight: 600;">
+                        <span>Duración estimada:</span>
+                        <span>2 horas</span>
+                    </div>
+                    
+                    <button class="btn btn-primary confirm-btn">
+                        <i class="fas fa-check-circle"></i> Confirmar Reserva
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Sistema de Reservas para Tattoo Studio &copy; 2025 - Todos los derechos reservados</p>
+        </footer>
+    </div>
+    
+    
+</html>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCANqpv_Qoj_zSdVrg57GFzmBNvhdUcII8",
+    authDomain: "reservasweb-3ab66.firebaseapp.com",
+    projectId: "reservasweb-3ab66",
+    storageBucket: "reservasweb-3ab66.firebasestorage.app",
+    messagingSenderId: "769749538076",
+    appId: "1:769749538076:web:cfbdb4a58187bddeb616d9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+    const calendarEl = document.querySelector('.calendar');
+    const currentMonthEl = document.getElementById('current-month');
+    const selectedDateDisplay = document.getElementById('selected-date-display');
+    const summaryDate = document.getElementById('summary-date');
+    const summaryTime = document.getElementById('summary-time');
+    const timeSlotsEl = document.querySelector('.time-slots');
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+
+    let selectedDate = today;
+    let selectedTime = null;
+    let horariosReservados = [];
+
+    function updateMonthHeader() {
+      const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      currentMonthEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    }
+
+    function updateSelectedDateDisplay() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      selectedDateDisplay.textContent = selectedDate.toLocaleDateString('es-ES', options);
+      summaryDate.textContent = selectedDate.toLocaleDateString('es-ES');
+    }
+
+    async function cargarHorariosReservados(fechaISO) {
+      const snapshot = await db.collection("reservas")
+        .where("fecha", "==", fechaISO)
+        .get();
+      horariosReservados = snapshot.docs.map(doc => doc.data().hora);
+    }
+
+    async function generateTimeSlots() {
+      timeSlotsEl.innerHTML = '';
+      const fechaISO = selectedDate.toISOString().split('T')[0];
+      await cargarHorariosReservados(fechaISO);
+
+      const startHour = 9;
+      const endHour = 19;
+
+      for (let hour = startHour; hour < endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          const formattedHour = hour.toString().padStart(2, '0');
+          const formattedMinute = minute.toString().padStart(2, '0');
+          const timeString = `${formattedHour}:${formattedMinute}`;
+          const slot = document.createElement('div');
+          slot.classList.add('time-slot');
+          slot.textContent = timeString;
+
+          if (horariosReservados.includes(timeString)) {
+            slot.classList.add('booked');
+          } else {
+            slot.addEventListener('click', () => {
+              document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+              slot.classList.add('selected');
+              selectedTime = timeString;
+              summaryTime.textContent = timeString;
+            });
+          }
+
+          timeSlotsEl.appendChild(slot);
+        }
+      }
+    }
+
+    function generateCalendar(month, year) {
+      while (calendarEl.children.length > 7) {
+        calendarEl.removeChild(calendarEl.lastChild);
+      }
+      updateMonthHeader();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const firstDayOfWeek = firstDay.getDay();
+      const startingDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+
+      for (let i = 0; i < startingDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.classList.add('calendar-day');
+        emptyDay.innerHTML = '<div class="calendar-day-number"></div>';
+        calendarEl.appendChild(emptyDay);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const dayEl = document.createElement('div');
+        dayEl.classList.add('calendar-day');
+        if (date.toDateString() === today.toDateString()) {
+          dayEl.classList.add('active');
+        }
+
+        dayEl.innerHTML = `<div class="calendar-day-number">${day}</div>`;
+        dayEl.addEventListener('click', async () => {
+          document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
+          dayEl.classList.add('active');
+          selectedDate = new Date(year, month, day);
+          updateSelectedDateDisplay();
+          selectedTime = null;
+          summaryTime.textContent = '-';
+          await generateTimeSlots();
+        });
+
+        calendarEl.appendChild(dayEl);
+      }
+    }
+
+    prevMonthBtn.addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      generateCalendar(currentMonth, currentYear);
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      generateCalendar(currentMonth, currentYear);
+    });
+
+    document.querySelector('.confirm-btn').addEventListener('click', async () => {
+      const nombre = document.getElementById('client-name').value;
+      const telefono = document.getElementById('client-phone').value;
+      const email = document.getElementById('client-email').value;
+
+      if (!selectedTime) return alert('Selecciona una hora');
+      if (!nombre || !telefono || !email) return alert('Completa todos los campos');
+
+      const fechaISO = selectedDate.toISOString().split('T')[0];
+
+      await db.collection("reservas").add({
+        nombre,
+        telefono,
+        email,
+        fecha: fechaISO,
+        hora: selectedTime,
+        artista: "María Rodríguez",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      alert(`¡Reserva guardada!
+${fechaISO} - ${selectedTime}`);
+      document.getElementById('client-name').value = '';
+      document.getElementById('client-phone').value = '';
+      document.getElementById('client-email').value = '';
+      selectedTime = null;
+      summaryTime.textContent = '-';
+      await generateTimeSlots();
+    });
+
+    generateCalendar(currentMonth, currentYear);
+    updateSelectedDateDisplay();
+    generateTimeSlots();
+  });
+</script>
+</body>
