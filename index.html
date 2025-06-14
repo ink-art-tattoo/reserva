@@ -354,213 +354,170 @@
       <p>Sistema de Reservas &copy; 2023 | Todos los derechos reservados</p>
     </footer>
   </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import emailjs from "https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js";
 
-  <script>
-    // Configura Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyCANqpv_Qoj_zSdVrg57GFzmBNvhdUcII8",
-      authDomain: "reservasweb-3ab66.firebaseapp.com",
-      projectId: "reservasweb-3ab66",
-      storageBucket: "reservasweb-3ab66.firebasestorage.app",
-      messagingSenderId: "769749538076",
-      appId: "1:769749538076:web:cfbdb4a58187bddeb616d9"
-    };
-    
-    // Inicializar Firebase
-    try {
-      const app = firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-    } catch (error) {
-      console.error("Error inicializando Firebase:", error);
-      document.getElementById("mensaje").className = "error";
-      document.getElementById("mensaje").innerHTML = 
-        '<i class="fas fa-exclamation-triangle"></i> Error al conectar con el servidor. Por favor recarga la página.';
-    }
+  // Configura Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCANqpv_Qoj_zSdVrg57GFzmBNvhdUcII8",
+    authDomain: "reservasweb-3ab66.firebaseapp.com",
+    projectId: "reservasweb-3ab66",
+    storageBucket: "reservasweb-3ab66.firebasestorage.app",
+    messagingSenderId: "769749538076",
+    appId: "1:769749538076:web:cfbdb4a58187bddeb616d9"
+  };
 
-    // Horarios base (cada 30 minutos de 08:00 a 18:00)
-    const horarios = [];
-    for (let h = 8; h <= 17; h++) {
-      horarios.push(`${String(h).padStart(2, '0')}:00`);
-      horarios.push(`${String(h).padStart(2, '0')}:30`);
-    }
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // Elementos del DOM
-    const fechaInput = document.getElementById('fecha');
-    const horaSelect = document.getElementById('hora');
-    const horarioContainer = document.getElementById('horario-container');
-    const mensajeDiv = document.getElementById('mensaje');
-    const submitBtn = document.getElementById('submit-btn');
-    const horarioBtns = document.querySelectorAll('.horario-btn');
+  // Horarios base
+  const horarios = [];
+  for (let h = 8; h <= 17; h++) {
+    horarios.push(${String(h).padStart(2, '0')}:00);
+    horarios.push(${String(h).padStart(2, '0')}:30);
+  }
 
-    // Configurar fecha mínima como hoy
-    const today = new Date();
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate());
-    fechaInput.min = minDate.toISOString().split('T')[0];
+  const fechaInput = document.getElementById('fecha');
+  const horaSelect = document.getElementById('hora');
+  const horarioContainer = document.getElementById('horario-container');
+  const mensajeDiv = document.getElementById('mensaje');
+  const submitBtn = document.getElementById('submit-btn');
+  const horarioBtns = document.querySelectorAll('.horario-btn');
 
-    // Configurar fecha inicial como hoy
-    fechaInput.value = minDate.toISOString().split('T')[0];
+  const today = new Date();
+  const minDate = new Date(today);
+  minDate.setDate(today.getDate());
+  fechaInput.min = minDate.toISOString().split('T')[0];
+  fechaInput.value = minDate.toISOString().split('T')[0];
 
-    // Cargar horarios iniciales
-    cargarHorarios();
+  cargarHorarios();
+  fechaInput.addEventListener('change', cargarHorarios);
 
-    // Event listener para cambio de fecha
-    fechaInput.addEventListener('change', cargarHorarios);
+  horarioBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (!this.classList.contains('disabled')) {
+        document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        horaSelect.value = this.textContent;
+      }
+    });
+  });
 
-    // Event listeners para botones de horario
+  async function cargarHorarios() {
+    mensajeDiv.style.display = 'none';
     horarioBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        if (!this.classList.contains('disabled')) {
-          // Deseleccionar cualquier otro botón seleccionado
-          document.querySelectorAll('.horario-btn').forEach(b => {
-            b.classList.remove('selected');
-          });
-          
-          // Seleccionar este botón
-          this.classList.add('selected');
-          
-          // Actualizar el select oculto
-          horaSelect.value = this.textContent;
+      btn.classList.add('disabled');
+      btn.classList.remove('selected');
+      btn.innerHTML = '<div class="spinner"></div>';
+    });
+    submitBtn.disabled = true;
+    horaSelect.value = "";
+
+    const fecha = fechaInput.value;
+    try {
+      const q = query(collection(db, "reservasweb"), where("fecha", "==", fecha));
+      const snapshot = await getDocs(q);
+      const reservadas = new Set();
+
+      snapshot.forEach(doc => {
+        const h = doc.data().hora;
+        reservadas.add(h);
+        const index = horarios.indexOf(h);
+        if (index !== -1) {
+          if (index + 1 < horarios.length) reservadas.add(horarios[index + 1]);
+          if (index + 2 < horarios.length) reservadas.add(horarios[index + 2]);
         }
       });
-    });
 
-    // Función para cargar horarios
-    async function cargarHorarios() {
-      mensajeDiv.style.display = 'none';
-      
-      // Deshabilitar todos los botones temporalmente
+      horarioBtns.forEach((btn, index) => {
+        const hora = horarios[index];
+        btn.textContent = hora;
+        if (reservadas.has(hora)) {
+          btn.classList.add('disabled');
+          btn.classList.remove('selected');
+        } else {
+          btn.classList.remove('disabled');
+        }
+      });
+
+    } catch (error) {
+      console.error("Error cargando reservas:", error);
       horarioBtns.forEach(btn => {
         btn.classList.add('disabled');
-        btn.classList.remove('selected');
-        btn.innerHTML = '<div class="spinner"></div>';
+        btn.textContent = "Error";
       });
-      
-      submitBtn.disabled = true;
-      horaSelect.value = "";
-      
-      const fecha = fechaInput.value;
-      
-      try {
-        const snapshot = await db.collection("reservasweb").where("fecha", "==", fecha).get();
-        const reservadas = new Set();
+      mensajeDiv.className = "error";
+      mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error al cargar los horarios. Por favor, inténtalo de nuevo.';
+      mensajeDiv.style.display = 'block';
+    }
+  }
 
-        snapshot.forEach(doc => {
-          const h = doc.data().hora;
-          reservadas.add(h);
-          
-          // Bloquear 2 horas siguientes
-          const index = horarios.indexOf(h);
-          if (index !== -1) {
-            if (index + 1 < horarios.length) reservadas.add(horarios[index + 1]);
-            if (index + 2 < horarios.length) reservadas.add(horarios[index + 2]);
-          }
-        });
+  emailjs.init("he4Q00rUNtLv_aUuL");
 
-        // Actualizar la interfaz de horarios
-        horarioBtns.forEach((btn, index) => {
-          const hora = horarios[index];
-          btn.textContent = hora;
-          
-          if (reservadas.has(hora)) {
-            btn.classList.add('disabled');
-            btn.classList.remove('selected');
-          } else {
-            btn.classList.remove('disabled');
-          }
-        });
-        
-      } catch (error) {
-        console.error("Error cargando reservas:", error);
-        
-        // Mostrar mensaje de error
-        horarioBtns.forEach(btn => {
-          btn.classList.add('disabled');
-          btn.textContent = "Error";
-        });
-        
-        mensajeDiv.className = "error";
-        mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error al cargar los horarios. Por favor, inténtalo de nuevo.';
-        mensajeDiv.style.display = 'block';
-      }
+  document.getElementById("reserva-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const nombre = document.getElementById("nombre").value;
+    const telefono = document.getElementById("telefono").value;
+    const fecha = document.getElementById("fecha").value;
+    const hora = horaSelect.value;
+    if (!hora) {
+      mensajeDiv.className = "error";
+      mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Por favor, selecciona un horario.';
+      mensajeDiv.style.display = 'block';
+      return;
     }
 
-    // Configurar EmailJS
-    emailjs.init("he4Q00rUNtLv_aUuL");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="spinner"></div> Procesando...';
 
-    // Event listener para el formulario
-    document.getElementById("reserva-form").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      
-      const nombre = document.getElementById("nombre").value;
-      const telefono = document.getElementById("telefono").value;
-      const fecha = document.getElementById("fecha").value;
-      const hora = horaSelect.value;
-      
-      if (!hora) {
-        mensajeDiv.className = "error";
-        mensajeDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Por favor, selecciona un horario.';
-        mensajeDiv.style.display = 'block';
-        return;
-      }
-      
-      // Mostrar estado de carga
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<div class="spinner"></div> Procesando...';
-      
-      try {
-        // Guardar en Firestore
-        await db.collection("reservasweb").add({ 
-          nombre, 
-          telefono, 
-          fecha, 
-          hora, 
-          timestamp: new Date() 
-        });
+    try {
+      await addDoc(collection(db, "reservasweb"), { 
+        nombre, 
+        telefono, 
+        fecha, 
+        hora, 
+        timestamp: new Date() 
+      });
 
-        // Enviar correo con EmailJS
-        await emailjs.send("service_yw8xcrm", "template_y09drjc", {
-          nombre: nombre,
-          telefono: telefono,
-          fecha: fecha,
-          hora: hora,
-          para_email: "cliente@ejemplo.com"
-        });
+      await emailjs.send("service_yw8xcrm", "template_y09drjc", {
+        nombre: nombre,
+        telefono: telefono,
+        fecha: fecha,
+        hora: hora,
+        para_email: "cliente@ejemplo.com"
+      });
 
-        // Mensaje de éxito
-        mensajeDiv.className = "success";
-        mensajeDiv.innerHTML = `
-          <i class="fas fa-check-circle"></i>
-          <h3>¡Reserva Confirmada!</h3>
-          <p>Gracias ${nombre}, tu reserva para el ${fecha} a las ${hora} ha sido registrada.</p>
-          <p>Recibirás un correo de confirmación.</p>
-        `;
-        mensajeDiv.style.display = 'block';
-        
-        // Reiniciar formulario
-        document.getElementById("reserva-form").reset();
-        horaSelect.value = "";
-        document.querySelectorAll('.horario-btn').forEach(btn => {
-          btn.classList.remove('selected');
-        });
-        
-        // Recargar horarios
-        cargarHorarios();
-        
-      } catch (error) {
-        console.error("Error:", error);
-        mensajeDiv.className = "error";
-        mensajeDiv.innerHTML = `
-          <i class="fas fa-exclamation-triangle"></i>
-          <h3>Error en la Reserva</h3>
-          <p>Hubo un problema al registrar tu reserva. Por favor, inténtalo de nuevo.</p>
-        `;
-        mensajeDiv.style.display = 'block';
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Reservar Cita';
-      }
-    });
-  </script>
+      mensajeDiv.className = "success";
+      mensajeDiv.innerHTML = 
+        <i class="fas fa-check-circle"></i>
+        <h3>¡Reserva Confirmada!</h3>
+        <p>Gracias ${nombre}, tu reserva para el ${fecha} a las ${hora} ha sido registrada.</p>
+        <p>Recibirás un correo de confirmación.</p>
+      ;
+      mensajeDiv.style.display = 'block';
+
+      document.getElementById("reserva-form").reset();
+      horaSelect.value = "";
+      document.querySelectorAll('.horario-btn').forEach(btn => btn.classList.remove('selected'));
+      cargarHorarios();
+
+    } catch (error) {
+      console.error("Error:", error);
+      mensajeDiv.className = "error";
+      mensajeDiv.innerHTML = 
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Error en la Reserva</h3>
+        <p>Hubo un problema al registrar tu reserva. Por favor, inténtalo de nuevo.</p>
+      ;
+      mensajeDiv.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Reservar Cita';
+    }
+  });
+</script>
 </body>
 </html>
