@@ -499,11 +499,7 @@
                         <span>Hora:</span>
                         <span id="summary-time">-</span>
                     </div>
-                    <div class="summary-item">
-                        <span>Artista:</span>
-                        <span>María Rodríguez</span>
-                    </div>
-                    <div class="summary-item" style="margin-top: 15px; font-weight: 600;">
+                                        <div class="summary-item" style="margin-top: 15px; font-weight: 600;">
                         <span>Duración estimada:</span>
                         <span>2 horas</span>
                     </div>
@@ -523,11 +519,10 @@
     
 </html>
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <script>
-  const firebaseConfig = {
+  const supabaseUrl = 
     apiKey: "AIzaSyCANqpv_Qoj_zSdVrg57GFzmBNvhdUcII8",
     authDomain: "reservasweb-3ab66.firebaseapp.com",
     projectId: "reservasweb-3ab66",
@@ -569,10 +564,11 @@
     }
 
     async function cargarHorariosReservados(fechaISO) {
-      const snapshot = await db.collection("reservas")
-        .where("fecha", "==", fechaISO)
-        .get();
-      horariosReservados = snapshot.docs.map(doc => doc.data().hora);
+      const { data, error } = await supabase
+        .from('reservas')
+        .select('hora')
+        .eq('fecha', fechaISO);
+      horariosReservados = (data || []).map(r => r.hora);
     }
 
     async function generateTimeSlots() {
@@ -677,15 +673,18 @@
 
       const fechaISO = selectedDate.toISOString().split('T')[0];
 
-      await db.collection("reservas").add({
+      const { error } = await supabase.from('reservas').insert([{
         nombre,
         telefono,
         email,
         fecha: fechaISO,
-        hora: selectedTime,
-        artista: "María Rodríguez",
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
+        hora: selectedTime
+      }]);
+
+      if (error) {
+        alert("Error al guardar la reserva: " + error.message);
+        return;
+      }
 
       alert(`¡Reserva guardada!
 ${fechaISO} - ${selectedTime}`);
